@@ -11,6 +11,10 @@
   const notice = $("engineNotice");
   if (!input || !select || !button || !output) return;
 
+  select.addEventListener("change", () => {
+    button.textContent = select.value === "researcher" ? "⌕ Search web & generate report" : "✳ Generate execution plan";
+  });
+
   const STORAGE_KEY = "agentverse-ai-engine-v2";
   const specialists = {
     ceo: "AI CEO", developer: "AI Developer", researcher: "AI Researcher",
