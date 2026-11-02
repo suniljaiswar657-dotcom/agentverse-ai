@@ -135,6 +135,8 @@ module.exports = async function handler(req, res) {
     modelLoop:
     for (const modelConfig of modelFallbacks) {
       for (let attempt = 1; attempt <= modelConfig.attempts; attempt++) {
+        response = null;
+        data = {};
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 20000);
         try {
@@ -173,7 +175,7 @@ module.exports = async function handler(req, res) {
         const shouldRetry = lastRequestError
           ? lastRequestError.name === "AbortError"
           : response && retryableStatuses.has(response.status);
-        if (!shouldRetry) break;
+        if (!shouldRetry) break modelLoop;
 
         if (attempt < modelConfig.attempts) {
           await new Promise(resolve => setTimeout(resolve, 1000));
@@ -185,12 +187,11 @@ module.exports = async function handler(req, res) {
       if (lastRequestError && lastRequestError.name === "AbortError") {
         return res.status(504).json({ error: "Gemini models did not respond within the time limit. Please try again later." });
       }
-      if (!response || !response.ok) {
-      const providerMessage = data.error && data.error.message ? data.error.message : "Gemini API request failed.";
+      const providerMessage = data && data.error && data.error.message ? data.error.message : "Gemini API request failed.";
       const safeMessage = response && response.status === 400
         ? "Gemini rejected this request. Check model availability and API key access."
-        : "Gemini service is temporarily unavailable across the configured fallback models."
-      console.error("Gemini API error:", response.status, providerMessage.slice(0, 300));
+        : "Gemini service is temporarily unavailable across the configured fallback models.";
+      console.error("Gemini API error:", response ? response.status : "network error", providerMessage.slice(0, 300));
       return res.status(response && response.status === 503 ? 503 : 502).json({ error: safeMessage });
     }
     const text = data.candidates && data.candidates[0] && data.candidates[0].content &&
