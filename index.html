@@ -92,6 +92,15 @@
             <div class="panel-heading"><div><div class="eyebrow">ORCHESTRATION OUTPUT</div><h2>Execution plan</h2></div><span class="queue-tag" id="planStatus">NO PLAN</span></div>
             <div id="planOutput" class="plan-output"><div class="empty-state"><span>✳</span><strong>Ready for your first mission</strong><small>Your objective and assigned specialist will appear here.</small></div></div>
             <div class="approval-actions" id="approvalActions" hidden><button class="approve-action" id="approvePlan" type="button">✓ Approve plan</button><button class="secondary-action" id="rejectPlan" type="button">Discard</button></div>
+            <div class="execution-console" id="executionConsole" hidden>
+              <div class="execution-head">
+                <div><div class="field-label">CONTROLLED EXECUTION</div><strong>Safe demo task</strong></div>
+                <span class="queue-tag" id="executionStatus">READY</span>
+              </div>
+              <p class="panel-note">This demo converts your approved AI plan into a Markdown playbook and downloads it to your device. No external account, message, payment, or service is accessed.</p>
+              <button class="primary-action" id="runSafeDemo" type="button">▶ Run safe demo · Export playbook</button>
+              <div class="execution-log" id="executionLog" aria-live="polite"></div>
+            </div>
             <p class="panel-note" id="engineNotice">AI plans require your review. Approval records your decision; it does not run external tools or contact services.</p>
           </div>
         </div>
@@ -117,5 +126,6 @@
   </div>
   <script src="app.js"></script>
   <script src="engine.js"></script>
+  <script src="execution.js"></script>
 </body>
 </html>
