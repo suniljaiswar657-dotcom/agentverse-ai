@@ -101,6 +101,19 @@
               <button class="primary-action" id="runSafeDemo" type="button">▶ Run safe demo · Export playbook</button>
               <div class="execution-log" id="executionLog" aria-live="polite"></div>
             </div>
+            <section class="history-panel" id="historyPanel" aria-label="Persistent execution history">
+              <div class="history-heading">
+                <div><div class="field-label">LOCAL RECOVERY</div><strong>Execution history</strong></div>
+                <span class="queue-tag" id="historyStatus">SAVED LOCALLY</span>
+              </div>
+              <div class="history-actions">
+                <button class="secondary-action" id="exportHistoryBackup" type="button">↓ Export backup</button>
+                <button class="secondary-action" id="importHistoryBackup" type="button">↑ Restore backup</button>
+                <input id="historyBackupFile" type="file" accept="application/json,.json" hidden>
+              </div>
+              <p class="panel-note">History stays in this browser (up to 100 records). Export a JSON backup to recover it on another browser or after clearing site data. Restore merges history only; it never restores approval or runs tasks.</p>
+              <div class="history-list" id="historyList" aria-live="polite"></div>
+            </section>
             <p class="panel-note" id="engineNotice">AI plans require your review. Approval records your decision; it does not run external tools or contact services.</p>
           </div>
         </div>
@@ -127,5 +140,6 @@
   <script src="app.js"></script>
   <script src="engine.js"></script>
   <script src="execution.js"></script>
+  <script src="history.js"></script>
 </body>
 </html>
