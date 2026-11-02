@@ -21,3 +21,18 @@
 .execution-log:empty{display:none}
 .execution-log-item{font-size:9px;line-height:1.5;color:#9cb4ca;padding:7px 8px;border-left:2px solid #54d6a0;background:#101d2a;border-radius:3px}
 .execution-log-item time{color:#718ba6;margin-right:7px;font-family:"DM Mono",monospace}
+
+
+/* Persistent execution history and local recovery */
+.history-panel{margin-top:14px;padding:13px;background:#0b121d;border:1px solid #26364b;border-radius:8px}
+.history-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.history-heading strong{font-size:12px}
+.history-actions{display:flex;gap:8px;margin-top:11px}
+.history-actions .secondary-action{font-size:9px;padding:9px 11px}
+.history-list{display:grid;gap:7px;margin-top:12px}
+.history-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px;background:#101a28;border:1px solid #202e42;border-radius:6px}
+.history-row strong{display:block;font-size:10px;line-height:1.45;color:#d2deee}
+.history-row small{display:block;margin-top:4px;font:8px "DM Mono",monospace;color:#7f91aa}
+.history-event{flex-shrink:0;font:8px "DM Mono",monospace;color:#8eb5e7;text-transform:uppercase}
+.history-empty{padding:12px 8px;color:#7e8ba1;font-size:9px;line-height:1.6;background:#101a28;border-radius:6px}
+@media(max-width:370px){.history-actions{flex-direction:column}.history-actions button{width:100%}.history-row{align-items:flex-start;flex-direction:column}}
