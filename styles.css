@@ -6,3 +6,6 @@
 
 /* Live AI planner states */
 .primary-action:disabled{opacity:.6;cursor:wait}.plan-extra{margin-top:12px}.plan-bullets{margin:7px 0 0;padding-left:18px;color:#c2cfe0;font-size:10px;line-height:1.7}.plan-bullets li{margin:3px 0}
+
+/* Private AI workspace sign-in */
+.login-box{padding:8px 0 14px}.login-box[hidden],#aiWorkspace[hidden]{display:none}.login-form{margin-top:16px}.login-form input{width:100%;background:#090f19;border:1px solid #28364b;border-radius:7px;padding:12px;color:#edf3ff;font:11px Manrope;outline:none}.login-form input:focus{border-color:#6795d1}.login-error{min-height:16px;color:#ff9ca5;font-size:10px;margin:8px 0 0}.workspace-session{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.workspace-session .secondary-action{font-size:9px;padding:8px 10px}
