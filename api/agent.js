@@ -121,29 +121,44 @@ module.exports = async function handler(req, res) {
   ].join(" ");
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 45000);
     let response;
-    let data;
-    try {
-      response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-        signal: controller.signal,
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemInstruction }] },
-          contents: [{ role: "user", parts: [{ text: mission }] }],
-          generationConfig: { responseMimeType: "application/json", maxOutputTokens: 1200 }
-        })
-      });
-      data = await response.json().catch(() => ({}));
-    } catch (requestError) {
-      if (requestError && requestError.name === "AbortError") {
-        return res.status(504).json({ error: "Gemini request timed out after 45 seconds. Please try again in a moment." });
+    let data = {};
+    const maxAttempts = 3;
+    const retryableStatuses = new Set([429, 500, 502, 503, 504]);
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      try {
+        response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+          signal: controller.signal,
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemInstruction }] },
+            contents: [{ role: "user", parts: [{ text: mission }] }],
+            generationConfig: { responseMimeType: "application/json", maxOutputTokens: 1200 }
+          })
+        });
+        data = await response.json().catch(() => ({}));
+      } catch (requestError) {
+        if (requestError && requestError.name === "AbortError") {
+          if (attempt === maxAttempts) {
+            return res.status(504).json({ error: "Gemini request timed out after 25 seconds on each of 3 attempts. Please try again later." });
+          }
+        } else if (attempt === maxAttempts) {
+          throw requestError;
+        }
+      } finally {
+        clearTimeout(timeoutId);
       }
-      throw requestError;
-    } finally {
-      clearTimeout(timeoutId);
+
+      if (response && response.ok) break;
+      if (response && !retryableStatuses.has(response.status)) break;
+      if (attempt < maxAttempts) {
+        const retryDelay = Math.min(1000 * (2 ** (attempt - 1)), 3000);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+      }
     }
     if (!response.ok) {
       const providerMessage = data.error && data.error.message ? data.error.message : "Gemini API request failed.";
@@ -153,7 +168,7 @@ module.exports = async function handler(req, res) {
           ? "Gemini rejected this request. Check model availability and API key access."
           : "Gemini service is temporarily unavailable.";
       console.error("Gemini API error:", response.status, providerMessage.slice(0, 300));
-      return res.status(response.status === 429 ? 429 : 502).json({ error: safeMessage });
+      return res.status(response.status === 429 || response.status === 503 ? response.status : 502).json({ error: safeMessage });
     }
     const text = data.candidates && data.candidates[0] && data.candidates[0].content &&
       data.candidates[0].content.parts && data.candidates[0].content.parts.map(part => part.text || "").join("");
