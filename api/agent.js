@@ -34,10 +34,10 @@ function validSession(req, secret) {
   if (!Number.isFinite(issued) || Date.now() - issued > SESSION_TTL_MS || issued > Date.now() + 60000) return false;
   return safeEqual(parts[1], sign(parts[0], secret));
 }
-function rateLimited(key) {
+function rateLimited(key, limit = 8) {
   const now = Date.now();
   const recent = (recentRequests.get(key) || []).filter(time => now - time < 60000);
-  if (recent.length >= 8) return true;
+  if (recent.length >= limit) return true;
   recent.push(now);
   recentRequests.set(key, recent);
   return false;
@@ -145,7 +145,7 @@ module.exports = async function handler(req, res) {
   }
 
   const ip = (req.headers["x-forwarded-for"] || "unknown").toString().split(",")[0].trim();
-  if (rateLimited(ip)) {
+  if (rateLimited(ip, agentKey === "researcher" ? 2 : 8)) {
     return res.status(429).json({ error: "Request limit reached for this server instance. Please wait one minute and try again." });
   }
 
@@ -204,7 +204,7 @@ module.exports = async function handler(req, res) {
         response = null;
         data = {};
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        const timeoutId = setTimeout(() => controller.abort(), isResearcher ? 45000 : 20000);
         const requestBody = {
           systemInstruction: { parts: [{ text: systemInstruction }] },
           contents: [{ role: "user", parts: [{ text: mission }] }],
