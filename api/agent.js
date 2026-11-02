@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const ALLOWED_AGENTS = {
   ceo: "AI CEO — strategy, prioritisation and decision framing",
   developer: "AI Developer — software design, implementation and debugging",
-  researcher: "AI Researcher — research, evidence and synthesis",
+  researcher: "AI Researcher — live web research, evidence and synthesis",
   marketer: "AI Marketer — content, audience and campaigns",
   business: "AI Business — operations, costs and business analysis",
   automation: "AI Automation — workflow design and process automation",
@@ -29,7 +29,7 @@ function readCookie(req, name) {
 function validSession(req, secret) {
   const token = readCookie(req, SESSION_COOKIE);
   const parts = token.split(".");
-  if (parts.length !== 2 || !/^\d+$/.test(parts[0])) return false;
+  if (parts.length !== 2 || !/^\\d+$/.test(parts[0])) return false;
   const issued = Number(parts[0]);
   if (!Number.isFinite(issued) || Date.now() - issued > SESSION_TTL_MS || issued > Date.now() + 60000) return false;
   return safeEqual(parts[1], sign(parts[0], secret));
@@ -41,6 +41,57 @@ function rateLimited(key) {
   recent.push(now);
   recentRequests.set(key, recent);
   return false;
+}
+function extractGroundedSources(metadata) {
+  const chunks = Array.isArray(metadata && metadata.groundingChunks) ? metadata.groundingChunks : [];
+  const sources = [];
+  const chunkSourceNumbers = [];
+  const seen = new Map();
+  for (const chunk of chunks) {
+    const web = chunk && chunk.web;
+    const uri = web && typeof web.uri === "string" ? web.uri.trim() : "";
+    if (!/^https?:\\/\\//i.test(uri)) {
+      chunkSourceNumbers.push(null);
+      continue;
+    }
+    if (seen.has(uri)) {
+      chunkSourceNumbers.push(seen.get(uri));
+      continue;
+    }
+    if (sources.length >= 12) {
+      chunkSourceNumbers.push(null);
+      continue;
+    }
+    const number = sources.length + 1;
+    sources.push({
+      number,
+      title: String(web.title || new URL(uri).hostname).slice(0, 180),
+      url: uri
+    });
+    seen.set(uri, number);
+    chunkSourceNumbers.push(number);
+  }
+  return { sources, chunkSourceNumbers };
+}
+function addGroundingCitations(text, metadata, chunkSourceNumbers) {
+  const supports = Array.isArray(metadata && metadata.groundingSupports) ? metadata.groundingSupports : [];
+  const insertions = new Map();
+  for (const support of supports) {
+    const end = Number(support && support.segment && support.segment.endIndex);
+    if (!Number.isInteger(end) || end < 0 || end > text.length) continue;
+    const numbers = (Array.isArray(support.groundingChunkIndices) ? support.groundingChunkIndices : [])
+      .map(index => chunkSourceNumbers[index])
+      .filter(number => Number.isInteger(number));
+    if (!numbers.length) continue;
+    if (!insertions.has(end)) insertions.set(end, new Set());
+    numbers.forEach(number => insertions.get(end).add(number));
+  }
+  let result = text;
+  Array.from(insertions.entries()).sort((a, b) => b[0] - a[0]).forEach(([end, numbers]) => {
+    const marker = " " + Array.from(numbers).sort((a, b) => a - b).map(number => "[" + number + "]").join("");
+    result = result.slice(0, end) + marker + result.slice(end);
+  });
+  return result;
 }
 
 module.exports = async function handler(req, res) {
@@ -108,17 +159,32 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: "Unknown specialist assignment." });
   }
 
-  const systemInstruction = [
-    "You are a specialist worker inside AGENTVERSE AI, a human-supervised multi-agent workspace.",
-    "Your assigned role is: " + agentRole + ".",
-    "Create a useful, realistic execution plan for the user's mission.",
-    "Do not claim you executed actions, accessed accounts, browsed websites, changed files, or contacted anyone.",
-    "Do not request passwords, API keys, or other secrets in the plan.",
-    "Keep recommendations practical for a zero-budget project where possible.",
-    "Return only valid JSON with this exact shape:",
-    '{"summary":"short mission interpretation","steps":["step 1","step 2"],"risks":["risk"],"needsHumanApproval":["actions requiring approval"],"deliverable":"expected output"}',
-    "Use 4–7 concrete steps. If the mission is unsafe or unclear, explain the issue and request clarification in the summary."
-  ].join(" ");
+  const isResearcher = agentKey === "researcher";
+  const systemInstruction = isResearcher
+    ? [
+        "You are the live-web research specialist inside AGENTVERSE AI.",
+        "Your role is: " + agentRole + ".",
+        "Google Search grounding is enabled. Use it to retrieve current public web evidence before writing the report.",
+        "Return an actual research report in clear Markdown, not a research plan or methodology.",
+        "Answer the mission directly. Include specific findings, dates or prices only when supported by retrieved sources.",
+        "Separate verified findings from estimates, assumptions and unknowns.",
+        "Never invent businesses, people, statistics, interviews, prices, customer demand, source titles or URLs.",
+        "If evidence is insufficient, say so explicitly and explain what could not be verified.",
+        "Use concise headings, comparisons and practical conclusions where relevant.",
+        "The server will attach a numbered source list from the actual Google Search grounding metadata. Do not fabricate a source list.",
+        "Do not claim that you contacted anyone, accessed private analytics, or performed external actions."
+      ].join(" ")
+    : [
+        "You are a specialist worker inside AGENTVERSE AI, a human-supervised multi-agent workspace.",
+        "Your assigned role is: " + agentRole + ".",
+        "Create a useful, realistic execution plan for the user's mission.",
+        "Do not claim you executed actions, accessed accounts, browsed websites, changed files, or contacted anyone.",
+        "Do not request passwords, API keys, or other secrets in the plan.",
+        "Keep recommendations practical for a zero-budget project where possible.",
+        "Return only valid JSON with this exact shape:",
+        '{"summary":"short mission interpretation","steps":["step 1","step 2"],"risks":["risk"],"needsHumanApproval":["actions requiring approval"],"deliverable":"expected output"}',
+        "Use 4–7 concrete steps. If the mission is unsafe or unclear, explain the issue and request clarification in the summary."
+      ].join(" ");
 
   try {
     let response;
@@ -139,16 +205,20 @@ module.exports = async function handler(req, res) {
         data = {};
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 20000);
+        const requestBody = {
+          systemInstruction: { parts: [{ text: systemInstruction }] },
+          contents: [{ role: "user", parts: [{ text: mission }] }],
+          generationConfig: isResearcher
+            ? { maxOutputTokens: 3000, temperature: 0.2 }
+            : { responseMimeType: "application/json", maxOutputTokens: 1200 }
+        };
+        if (isResearcher) requestBody.tools = [{ google_search: {} }];
         try {
           response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + modelConfig.name + ":generateContent", {
             method: "POST",
             headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
             signal: controller.signal,
-            body: JSON.stringify({
-              systemInstruction: { parts: [{ text: systemInstruction }] },
-              contents: [{ role: "user", parts: [{ text: mission }] }],
-              generationConfig: { responseMimeType: "application/json", maxOutputTokens: 1200 }
-            })
+            body: JSON.stringify(requestBody)
           });
           data = await response.json().catch(() => ({}));
           lastRequestError = null;
@@ -194,9 +264,39 @@ module.exports = async function handler(req, res) {
       console.error("Gemini API error:", response ? response.status : "network error", providerMessage.slice(0, 300));
       return res.status(response && response.status === 503 ? 503 : 502).json({ error: safeMessage });
     }
-    const text = data.candidates && data.candidates[0] && data.candidates[0].content &&
-      data.candidates[0].content.parts && data.candidates[0].content.parts.map(part => part.text || "").join("");
+    const candidate = data.candidates && data.candidates[0];
+    const text = candidate && candidate.content && candidate.content.parts &&
+      candidate.content.parts.map(part => part.text || "").join("");
     if (!text) return res.status(502).json({ error: "Gemini returned an empty response. Please try again." });
+
+    if (isResearcher) {
+      const metadata = candidate.groundingMetadata || {};
+      const { sources, chunkSourceNumbers } = extractGroundedSources(metadata);
+      if (!sources.length) {
+        return res.status(502).json({
+          error: "Researcher could not retrieve verifiable web sources for this mission. No research report was saved. Try a more specific research question."
+        });
+      }
+      const groundedText = addGroundingCitations(text, metadata, chunkSourceNumbers);
+      const searchQueries = Array.isArray(metadata.webSearchQueries)
+        ? metadata.webSearchQueries.filter(query => typeof query === "string").slice(0, 8)
+        : [];
+      return res.status(200).json({
+        provider: "Google Gemini · Google Search",
+        model: activeModel,
+        agent: agentKey,
+        plan: {
+          summary: "Live web research completed with " + sources.length + " source(s). Review the evidence and limitations below.",
+          steps: [],
+          risks: ["Search results and AI summaries can be incomplete or outdated. Open the cited sources before relying on important claims."],
+          needsHumanApproval: ["Verify important claims and source dates before making business or financial decisions."],
+          deliverable: "Grounded research report with source links.",
+          researchText: groundedText.slice(0, 18000),
+          sources,
+          searchQueries
+        }
+      });
+    }
 
     let plan;
     try { plan = JSON.parse(text); } catch {
