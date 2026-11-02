@@ -30,7 +30,7 @@ function validSession(req, secret) {
   const token = readCookie(req, SESSION_COOKIE);
   const parts = token.split(".");
   if (parts.length !== 2 || !/^\d+$/.test(parts[0])) return false;
-  if (parts.length !== 2 || !/^\d+$/.test(parts[0])) return false;
+  const issued = Number(parts[0]);
   if (!Number.isFinite(issued) || Date.now() - issued > SESSION_TTL_MS || issued > Date.now() + 60000) return false;
   return safeEqual(parts[1], sign(parts[0], secret));
 }
