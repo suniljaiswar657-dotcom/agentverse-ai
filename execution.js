@@ -125,6 +125,7 @@
   });
   renderLog();
   updateAvailability();
+  $("planMission").addEventListener("click", () => window.setTimeout(updateAvailability, 0));
   $("approvePlan").addEventListener("click", () => window.setTimeout(updateAvailability, 0));
   $("rejectPlan").addEventListener("click", () => window.setTimeout(updateAvailability, 0));
 })();
