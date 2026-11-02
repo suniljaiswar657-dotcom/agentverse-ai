@@ -73,13 +73,13 @@
               <select id="agentSelect"><option value="auto">Auto-select specialist</option><option value="ceo">AI CEO</option><option value="developer">AI Developer</option><option value="researcher">AI Researcher</option><option value="marketer">AI Marketer</option><option value="business">AI Business</option><option value="automation">AI Automation</option><option value="security">AI Security</option></select>
             </div>
             <button class="primary-action" id="planMission" type="button">✳ Generate execution plan</button>
-            <p class="panel-note">This version uses transparent local rules. No external AI request is made.</p>
+            <p class="panel-note">Powered by Google Gemini through a server-side endpoint. Add GEMINI_API_KEY in Vercel to enable live AI.</p>
           </div>
           <div class="panel plan-panel" aria-live="polite">
             <div class="panel-heading"><div><div class="eyebrow">ORCHESTRATION OUTPUT</div><h2>Execution plan</h2></div><span class="queue-tag" id="planStatus">NO PLAN</span></div>
             <div id="planOutput" class="plan-output"><div class="empty-state"><span>✳</span><strong>Ready for your first mission</strong><small>Your objective and assigned specialist will appear here.</small></div></div>
             <div class="approval-actions" id="approvalActions" hidden><button class="approve-action" id="approvePlan" type="button">✓ Approve plan</button><button class="secondary-action" id="rejectPlan" type="button">Discard</button></div>
-            <p class="panel-note" id="engineNotice">Approval only records your decision locally. It does not run external tools or contact services.</p>
+            <p class="panel-note" id="engineNotice">AI plans require your review. Approval records your decision; it does not run external tools or contact services.</p>
           </div>
         </div>
       </section>
@@ -96,10 +96,10 @@
           <div class="activity-item"><span class="activity-icon">✓</span><div><strong>Workspace initialised</strong><small>Command Center loaded locally</small></div><time>NOW</time></div>
           <div class="activity-item"><span class="activity-icon">◈</span><div><strong>7 agent roles configured</strong><small>Role definitions only — no live agents</small></div><time>NOW</time></div>
           <div class="activity-item"><span class="activity-icon">⛨</span><div><strong>Approval-first mode enabled</strong><small>External actions require human approval</small></div><time>ON</time></div>
-          <div class="safety-note"><span>ⓘ</span><p><strong>Execution is not connected.</strong> This foundation organises tasks and agent roles. Real AI providers and tool permissions will be integrated in later steps.</p></div>
+          <div class="safety-note"><span>ⓘ</span><p><strong>Human control stays enabled.</strong> Gemini can prepare plans; it cannot execute external actions. Add the API key in Vercel to enable AI planning.</p></div>
         </div>
       </section>
-      <footer><span>AGENTVERSE AI <b>•</b> BUILD 0.1.0</span><span>BUILT FOR HUMAN-SUPERVISED AI</span></footer>
+      <footer><span>AGENTVERSE AI <b>•</b> BUILD 0.3.0</span><span>BUILT FOR HUMAN-SUPERVISED AI</span></footer>
     </main>
   </div>
   <script src="app.js"></script>
