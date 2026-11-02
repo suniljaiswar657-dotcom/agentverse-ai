@@ -1,25 +1,21 @@
 (() => {
   "use strict";
-  const $ = (id) => document.getElementById(id);
+  const $ = id => document.getElementById(id);
   const input = $("missionInput");
   const select = $("agentSelect");
-  const planButton = $("planMission");
+  const button = $("planMission");
   const output = $("planOutput");
   const status = $("planStatus");
   const actions = $("approvalActions");
   const approvalCount = $("approvalCount");
   const notice = $("engineNotice");
-  if (!input || !select || !planButton || !output) return;
+  if (!input || !select || !button || !output) return;
 
-  const STORAGE_KEY = "agentverse-ai-engine-v1";
+  const STORAGE_KEY = "agentverse-ai-engine-v2";
   const specialists = {
-    ceo: { name: "AI CEO", focus: "strategy, prioritisation and decision framing" },
-    developer: { name: "AI Developer", focus: "technical design, implementation and debugging" },
-    researcher: { name: "AI Researcher", focus: "research, evidence gathering and synthesis" },
-    marketer: { name: "AI Marketer", focus: "content, audience and campaign planning" },
-    business: { name: "AI Business", focus: "operations, costs and business analysis" },
-    automation: { name: "AI Automation", focus: "workflow mapping and process automation" },
-    security: { name: "AI Security", focus: "risk review, privacy and security checks" }
+    ceo: "AI CEO", developer: "AI Developer", researcher: "AI Researcher",
+    marketer: "AI Marketer", business: "AI Business",
+    automation: "AI Automation", security: "AI Security"
   };
   let currentPlan = null;
   let saved = {};
@@ -40,43 +36,34 @@
     return "ceo";
   }
 
-  function makeSteps(agentKey, mission) {
-    const base = [
-      "Clarify the desired outcome and define what a successful result looks like.",
-      "Break the mission into small, verifiable work items.",
-      "Identify required information, tools, dependencies and constraints."
-    ];
-    const tailored = {
-      ceo: ["Rank the work by impact, effort and risk.", "Prepare a recommendation with assumptions and measurable next actions."],
-      developer: ["Map the required interface, data flow and technical components.", "Implement in small changes, then run functional and responsive checks."],
-      researcher: ["Collect relevant sources and record their dates and reliability.", "Cross-check key claims and produce a concise evidence-based summary."],
-      marketer: ["Define the audience, message and content objective.", "Draft channel-specific content and measurable engagement indicators."],
-      business: ["Map the business process, customer value and cost drivers.", "Estimate outcomes transparently and identify operational risks."],
-      automation: ["Map trigger, inputs, actions, conditions and failure paths.", "Design a human approval checkpoint before consequential actions."],
-      security: ["Identify sensitive data, permissions and likely threat scenarios.", "Recommend least-privilege controls and validation checks before release."]
-    };
-    return [...base, ...tailored[agentKey], "Present the deliverable for human review; do not take external action without explicit approval."];
-  }
-
   function updateApprovalCount() {
     approvalCount.textContent = saved.pending ? "01" : "00";
   }
 
-  function showPlan(plan, isPending) {
+  function appendText(parent, tag, className, value) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    node.textContent = value;
+    parent.append(node);
+    return node;
+  }
+
+  function showPlan(plan, pending) {
     output.replaceChildren();
     const summary = document.createElement("div");
     summary.className = "plan-summary";
-    const badge = document.createElement("span");
-    badge.className = "plan-badge";
-    badge.textContent = "ROUTED TO " + plan.agentName.toUpperCase();
-    const title = document.createElement("strong");
-    title.textContent = plan.mission;
-    const meta = document.createElement("small");
-    meta.textContent = "Specialist focus: " + plan.focus;
-    summary.append(badge, title, meta);
+    appendText(summary, "span", "plan-badge", "LIVE AI · " + (specialists[plan.agentKey] || "SPECIALIST").toUpperCase());
+    appendText(summary, "strong", "", plan.summary || plan.mission);
+    appendText(summary, "small", "", "Provider: " + (plan.provider || "Google Gemini") + " · Model: " + (plan.model || "gemini-3.8-flash"));
+    output.append(summary);
+
+    const heading = document.createElement("div");
+    heading.className = "field-label";
+    heading.textContent = "RECOMMENDED WORKFLOW";
+    output.append(heading);
     const list = document.createElement("ol");
     list.className = "plan-steps";
-    plan.steps.forEach((step, index) => {
+    (plan.steps || []).forEach((step, index) => {
       const item = document.createElement("li");
       const number = document.createElement("span");
       number.textContent = String(index + 1).padStart(2, "0");
@@ -85,18 +72,57 @@
       item.append(number, text);
       list.append(item);
     });
-    const risk = document.createElement("p");
-    risk.className = "risk-line";
-    risk.textContent = "Execution mode: planning only · External tools: disconnected · Human control: required";
-    output.append(summary, list, risk);
-    status.textContent = isPending ? "AWAITING REVIEW" : "APPROVED LOCALLY";
-    actions.hidden = !isPending;
-    notice.textContent = isPending
-      ? "Review the plan. Approval saves your decision locally; it does not execute tools or contact services."
-      : "This plan is stored in this browser only. No external tools or AI provider have been called.";
+    output.append(list);
+
+    if (plan.deliverable) {
+      const deliverable = document.createElement("div");
+      deliverable.className = "plan-summary plan-extra";
+      appendText(deliverable, "span", "plan-badge", "EXPECTED DELIVERABLE");
+      appendText(deliverable, "strong", "", plan.deliverable);
+      output.append(deliverable);
+    }
+    if (plan.risks && plan.risks.length) {
+      const risks = document.createElement("div");
+      risks.className = "plan-extra";
+      appendText(risks, "div", "field-label", "RISKS TO REVIEW");
+      const riskList = document.createElement("ul");
+      riskList.className = "plan-bullets";
+      plan.risks.forEach(risk => appendText(riskList, "li", "", risk));
+      risks.append(riskList);
+      output.append(risks);
+    }
+    if (plan.needsHumanApproval && plan.needsHumanApproval.length) {
+      const approvals = document.createElement("div");
+      approvals.className = "plan-extra";
+      appendText(approvals, "div", "field-label", "HUMAN APPROVAL REQUIRED");
+      const approvalList = document.createElement("ul");
+      approvalList.className = "plan-bullets";
+      plan.needsHumanApproval.forEach(item => appendText(approvalList, "li", "", item));
+      approvals.append(approvalList);
+      output.append(approvals);
+    }
+
+    status.textContent = pending ? "AWAITING REVIEW" : "APPROVED LOCALLY";
+    actions.hidden = !pending;
+    notice.textContent = pending
+      ? "AI-generated plan ready. Review it carefully. Approval saves your decision locally; it does not execute external tools."
+      : "Your approval decision is stored in this browser. No external action has been performed.";
   }
 
-  planButton.addEventListener("click", () => {
+  function showError(message) {
+    output.replaceChildren();
+    const box = document.createElement("div");
+    box.className = "safety-note";
+    appendText(box, "span", "", "ⓘ");
+    const p = document.createElement("p");
+    p.textContent = message;
+    box.append(p);
+    output.append(box);
+    status.textContent = "AI UNAVAILABLE";
+    actions.hidden = true;
+  }
+
+  button.addEventListener("click", async () => {
     const mission = input.value.trim();
     if (!mission) {
       input.focus();
@@ -105,21 +131,57 @@
       input.addEventListener("input", () => input.setCustomValidity(""), { once: true });
       return;
     }
+    if (mission.length > 1500) {
+      showError("Mission must be 1,500 characters or less.");
+      return;
+    }
+
     const agentKey = select.value === "auto" ? chooseAgent(mission) : select.value;
-    const agent = specialists[agentKey];
-    currentPlan = {
-      id: Date.now().toString(36),
-      mission,
-      agentKey,
-      agentName: agent.name,
-      focus: agent.focus,
-      steps: makeSteps(agentKey, mission),
-      createdAt: new Date().toISOString()
-    };
-    saved = { pending: true, plan: currentPlan };
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saved)); } catch {}
-    showPlan(currentPlan, true);
-    updateApprovalCount();
+    button.disabled = true;
+    button.textContent = "Connecting to Gemini…";
+    status.textContent = "AI THINKING";
+    actions.hidden = true;
+    output.replaceChildren();
+    const loading = document.createElement("div");
+    loading.className = "empty-state";
+    appendText(loading, "span", "", "✳");
+    appendText(loading, "strong", "", "Real AI is preparing your plan");
+    appendText(loading, "small", "", "Sending mission securely to the server-side AI endpoint…");
+    output.append(loading);
+
+    try {
+      const response = await fetch("/api/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mission, agent: agentKey })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "AI request failed. Please try again.");
+      if (!data.plan || !Array.isArray(data.plan.steps)) throw new Error("AI response was incomplete. Please try again.");
+
+      currentPlan = {
+        id: Date.now().toString(36),
+        mission,
+        agentKey,
+        summary: data.plan.summary || mission,
+        steps: data.plan.steps,
+        risks: data.plan.risks || [],
+        needsHumanApproval: data.plan.needsHumanApproval || [],
+        deliverable: data.plan.deliverable || "",
+        provider: data.provider,
+        model: data.model,
+        createdAt: new Date().toISOString()
+      };
+      saved = { pending: true, plan: currentPlan };
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saved)); } catch {}
+      showPlan(currentPlan, true);
+      updateApprovalCount();
+    } catch (error) {
+      showError(error && error.message ? error.message : "Could not connect to the AI service.");
+    } finally {
+      button.disabled = false;
+      button.textContent = "✳ Generate execution plan";
+    }
   });
 
   $("approvePlan").addEventListener("click", () => {
@@ -128,7 +190,6 @@
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saved)); } catch {}
     showPlan(currentPlan, false);
     updateApprovalCount();
-    status.textContent = "APPROVED LOCALLY";
   });
 
   $("rejectPlan").addEventListener("click", () => {
@@ -138,10 +199,10 @@
     output.replaceChildren();
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    const symbol = document.createElement("span"); symbol.textContent = "✳";
-    const title = document.createElement("strong"); title.textContent = "Plan discarded";
-    const small = document.createElement("small"); small.textContent = "Enter a new mission whenever you are ready.";
-    empty.append(symbol, title, small); output.append(empty);
+    appendText(empty, "span", "", "✳");
+    appendText(empty, "strong", "", "Plan discarded");
+    appendText(empty, "small", "", "Enter a new mission whenever you are ready.");
+    output.append(empty);
     status.textContent = "NO PLAN";
     actions.hidden = true;
     notice.textContent = "No plan is pending. Nothing has been executed.";
