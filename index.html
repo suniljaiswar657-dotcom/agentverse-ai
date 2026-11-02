@@ -79,13 +79,13 @@
             <div class="workspace-session"><span class="secure-label">● SESSION SECURE</span><button class="secondary-action" id="logoutButton" type="button">Lock workspace</button></div>
             <div class="panel-heading"><div><div class="eyebrow">TASK ROUTER</div><h2>Give your workforce a mission</h2></div></div>
             <label class="field-label" for="missionInput">MISSION / OBJECTIVE</label>
-            <textarea id="missionInput" maxlength="1000" placeholder="Example: Research the best free tools to build a small business website..." rows="4"></textarea>
+            <textarea id="missionInput" maxlength="1500" placeholder="Example: Research the best free tools to build a small business website..." rows="4"></textarea>
             <div class="brain-controls">
               <label class="field-label" for="agentSelect">ASSIGNMENT</label>
               <select id="agentSelect"><option value="auto">Auto-select specialist</option><option value="ceo">AI CEO</option><option value="developer">AI Developer</option><option value="researcher">AI Researcher</option><option value="marketer">AI Marketer</option><option value="business">AI Business</option><option value="automation">AI Automation</option><option value="security">AI Security</option></select>
             </div>
             <button class="primary-action" id="planMission" type="button">✳ Generate execution plan</button>
-            <p class="panel-note">Powered by Google Gemini through a server-side endpoint. Workspace login and API keys are never sent to the browser as provider credentials.</p>
+            <p class="panel-note">Powered by Google Gemini through a server-side endpoint. Researcher uses Google Search grounding and displays returned source links; other agents generate plans. Google currently includes 5,000 free Search grounding queries/month shared across Gemini 3+; after that, $14 per 1,000 queries. One prompt can trigger multiple queries. Check current pricing before heavy use.</p>
           </div>
           </div>
           <div class="panel plan-panel" aria-live="polite">

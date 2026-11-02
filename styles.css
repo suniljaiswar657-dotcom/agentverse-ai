@@ -36,3 +36,14 @@
 .history-event{flex-shrink:0;font:8px "DM Mono",monospace;color:#8eb5e7;text-transform:uppercase}
 .history-empty{padding:12px 8px;color:#7e8ba1;font-size:9px;line-height:1.6;background:#101a28;border-radius:6px}
 @media(max-width:370px){.history-actions{flex-direction:column}.history-actions button{width:100%}.history-row{align-items:flex-start;flex-direction:column}}
+
+
+/* Grounded Researcher report and citations */
+.research-report{margin-top:14px;padding:13px;background:#0b1720;border:1px solid #28506a;border-radius:8px}
+.research-text{white-space:pre-wrap;overflow-wrap:anywhere;color:#c8d7e8;font-size:10px;line-height:1.8}
+.research-sources-label{margin-top:18px}
+.research-sources{margin:8px 0 0;padding-left:22px;color:#8fb8e8;font-size:9px;line-height:1.8}
+.research-sources a{color:#9fc8ff;text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere}
+.research-queries{margin-top:14px;color:#91a8c2;font-size:9px}
+.research-queries summary{cursor:pointer}
+.research-queries ul{padding-left:18px;line-height:1.7}
