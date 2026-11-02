@@ -39,3 +39,13 @@ Google AI Studio: https://aistudio.google.com/app/apikey
 - **Incorrect workspace password:** confirm `AGENTVERSE_ACCESS_PASSWORD` exactly matches the value saved in Vercel.
 - **Gemini is not configured:** confirm `GEMINI_API_KEY` is saved in the correct Vercel environment and redeploy.
 - **Gemini rate limit reached:** wait for the quota window to reset; check AI Studio limits for the selected model.
+
+
+## Live web research (Researcher agent)
+
+- The Researcher assignment uses Gemini's built-in Google Search grounding tool.
+- Research requests return a report plus source links extracted from Gemini's grounding metadata. If no verifiable web sources are returned, the API rejects the report rather than presenting an ungrounded plan as research.
+- The browser renders the report as text and opens source links in a new tab. The Markdown playbook export includes the report and its source URLs.
+- Researcher requests are rate-limited more tightly than other agent requests (2 per minute per server instance). This is an abuse guard, not a monthly spending cap.
+- Google's current Gemini API documentation lists 5,000 free Google Search grounding requests per month shared across Gemini 3 and newer models, then $14 per 1,000 search requests. A single prompt can trigger multiple search queries. Pricing and quotas can change; check https://ai.google.dev/gemini-api/docs/google-search before frequent use. Keep usage within the free allowance to preserve the ₹0 target.
+- Search grounding is evidence assistance, not a guarantee that every claim is correct. Open the sources and verify important details.
