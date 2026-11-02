@@ -144,14 +144,13 @@ module.exports = async function handler(req, res) {
     return res.status(503).json({ error: "Gemini is not configured. Add GEMINI_API_KEY in Vercel Project Settings → Environment Variables, then redeploy." });
   }
 
+  const mission = typeof body.mission === "string" ? body.mission.trim() : "";
+  const agentKey = typeof body.agent === "string" ? body.agent : "ceo";
+  const agentRole = ALLOWED_AGENTS[agentKey];
   const ip = (req.headers["x-forwarded-for"] || "unknown").toString().split(",")[0].trim();
   if (rateLimited(ip, agentKey === "researcher" ? 2 : 8)) {
     return res.status(429).json({ error: "Request limit reached for this server instance. Please wait one minute and try again." });
   }
-
-  const mission = typeof body.mission === "string" ? body.mission.trim() : "";
-  const agentKey = typeof body.agent === "string" ? body.agent : "ceo";
-  const agentRole = ALLOWED_AGENTS[agentKey];
   if (!mission || mission.length > 1500) {
     return res.status(400).json({ error: "Mission is required and must be 1–1500 characters." });
   }
