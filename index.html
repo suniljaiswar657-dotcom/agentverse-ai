@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080b12">
+  <meta name="description" content="AGENTVERSE AI — a human-supervised AI workforce command center.">
+  <title>AGENTVERSE AI — Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#" aria-label="Agentverse home"><span class="brand-mark">A</span><span>AGENTVERSE<span class="brand-ai">.AI</span></span></a>
+      <div class="workspace-label">WORKSPACE</div>
+      <nav class="nav">
+        <a class="nav-link active" href="#overview"><span>◫</span> Command Center</a>
+        <a class="nav-link" href="#agents"><span>◈</span> AI Workforce <em>07</em></a>
+        <a class="nav-link" href="#tasks"><span>▤</span> Task Queue</a>
+        <a class="nav-link" href="#activity"><span>◷</span> Activity Log</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="human-card"><div class="human-icon">✓</div><div><strong>Human oversight</strong><small>Approval-first mode is ON</small></div><span class="status-dot"></span></div>
+        <div class="profile"><div class="avatar">S</div><div><strong>Workspace owner</strong><small>Free workspace</small></div><span class="more">···</span></div>
+      </div>
+    </aside>
+
+    <main class="main" id="overview">
+      <header class="topbar">
+        <button class="mobile-menu" id="menuToggle" aria-label="Open menu">☰</button>
+        <div class="crumb">Workspace <span>/</span> <strong>Command Center</strong></div>
+        <div class="top-actions"><span class="live-label"><i></i> SYSTEM READY</span><button class="icon-btn" aria-label="Notifications">♧</button></div>
+      </header>
+
+      <section class="welcome">
+        <div><div class="eyebrow">MONDAY, NOVEMBER 02, 2026 <span class="eyebrow-line"></span> OVERVIEW</div><h1>Your AI workforce,<br><span>under your command.</span></h1><p>Plan work, organise specialist agents, and keep every important action under human control.</p></div>
+        <div class="welcome-orb"><div class="orb-core">A<span>+</span></div><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><b class="orb-node node-one"></b><b class="orb-node node-two"></b><b class="orb-node node-three"></b></div>
+      </section>
+
+      <section class="metrics" aria-label="Workspace metrics">
+        <article class="metric"><div class="metric-top"><span>REGISTERED AGENTS</span><b>◈</b></div><div class="metric-value">07</div><div class="metric-foot">Specialist roles configured</div></article>
+        <article class="metric"><div class="metric-top"><span>OPEN TASKS</span><b>▤</b></div><div class="metric-value" id="openCount">00</div><div class="metric-foot">Waiting in your task queue</div></article>
+        <article class="metric"><div class="metric-top"><span>AWAITING APPROVAL</span><b>⌁</b></div><div class="metric-value">00</div><div class="metric-foot">No external actions authorised</div></article>
+        <article class="metric"><div class="metric-top"><span>WORKSPACE MODE</span><b>◉</b></div><div class="metric-value mode-value">SAFE</div><div class="metric-foot"><span class="green-dot"></span> Human-supervised</div></article>
+      </section>
+
+      <section class="section-block" id="agents">
+        <div class="section-heading"><div><div class="eyebrow">YOUR SPECIALIST TEAM</div><h2>AI Workforce <span class="count-pill">07 AGENTS</span></h2></div><button class="text-button" id="viewAgents">Manage workforce <span>↗</span></button></div>
+        <div class="agent-grid">
+          <article class="agent-card"><div class="agent-icon violet">✳</div><div class="agent-meta"><span class="agent-state">ROLE DEFINED</span><h3>AI CEO</h3><p>Strategy & planning</p></div><span class="agent-arrow">↗</span></article>
+          <article class="agent-card"><div class="agent-icon blue">⌘</div><div class="agent-meta"><span class="agent-state">ROLE DEFINED</span><h3>AI Developer</h3><p>Code & debugging</p></div><span class="agent-arrow">↗</span></article>
+          <article class="agent-card"><div class="agent-icon cyan">⌕</div><div class="agent-meta"><span class="agent-state">ROLE DEFINED</span><h3>AI Researcher</h3><p>Research & insights</p></div><span class="agent-arrow">↗</span></article>
+          <article class="agent-card"><div class="agent-icon orange">◉</div><div class="agent-meta"><span class="agent-state">ROLE DEFINED</span><h3>AI Marketer</h3><p>Content & campaigns</p></div><span class="agent-arrow">↗</span></article>
+          <article class="agent-card"><div class="agent-icon green">▥</div><div class="agent-meta"><span class="agent-state">ROLE DEFINED</span><h3>AI Business</h3><p>Operations & reports</p></div><span class="agent-arrow">↗</span></article>
+          <article class="agent-card"><div class="agent-icon pink">⤴</div><div class="agent-meta"><span class="agent-state">ROLE DEFINED</span><h3>AI Automation</h3><p>Workflow design</p></div><span class="agent-arrow">↗</span></article>
+          <article class="agent-card"><div class="agent-icon red">⛨</div><div class="agent-meta"><span class="agent-state">ROLE DEFINED</span><h3>AI Security</h3><p>Risk & safety checks</p></div><span class="agent-arrow">↗</span></article>
+        </div>
+      </section>
+
+      <section class="lower-grid">
+        <div class="panel task-panel" id="tasks">
+          <div class="panel-heading"><div><div class="eyebrow">WORK ORGANISER</div><h2>Task Queue</h2></div><span class="queue-tag">LOCAL QUEUE</span></div>
+          <form id="taskForm" class="task-form"><label class="sr-only" for="taskInput">Describe a task</label><input id="taskInput" maxlength="180" placeholder="Describe a task for your AI workforce..." required><button type="submit">＋ Add task</button></form>
+          <div id="taskList" class="task-list"><div class="empty-state"><span>▤</span><strong>Your queue is clear</strong><small>Add a task to organise your next piece of work.</small></div></div>
+          <p class="panel-note">Tasks are saved in this browser only. No AI execution is connected yet.</p>
+        </div>
+        <div class="panel activity-panel" id="activity">
+          <div class="panel-heading"><div><div class="eyebrow">SYSTEM TRANSPARENCY</div><h2>Activity Log</h2></div><span class="secure-label">● PRIVATE</span></div>
+          <div class="activity-item"><span class="activity-icon">✓</span><div><strong>Workspace initialised</strong><small>Command Center loaded locally</small></div><time>NOW</time></div>
+          <div class="activity-item"><span class="activity-icon">◈</span><div><strong>7 agent roles configured</strong><small>Role definitions only — no live agents</small></div><time>NOW</time></div>
+          <div class="activity-item"><span class="activity-icon">⛨</span><div><strong>Approval-first mode enabled</strong><small>External actions require human approval</small></div><time>ON</time></div>
+          <div class="safety-note"><span>ⓘ</span><p><strong>Execution is not connected.</strong> This foundation organises tasks and agent roles. Real AI providers and tool permissions will be integrated in later steps.</p></div>
+        </div>
+      </section>
+      <footer><span>AGENTVERSE AI <b>•</b> BUILD 0.1.0</span><span>BUILT FOR HUMAN-SUPERVISED AI</span></footer>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
