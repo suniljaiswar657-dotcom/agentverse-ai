@@ -123,52 +123,75 @@ module.exports = async function handler(req, res) {
   try {
     let response;
     let data = {};
-    const maxAttempts = 3;
-    const retryableStatuses = new Set([429, 500, 502, 503, 504]);
+    let activeModel = "";
+    const modelFallbacks = [
+      { name: "gemini-3.8-flash", attempts: 2 },
+      { name: "gemini-3.6-flash", attempts: 1 },
+      { name: "gemini-3.5-flash-lite", attempts: 1 }
+    ];
+    const retryableStatuses = new Set([500, 502, 503, 504]);
+    let lastRequestError = null;
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
-      try {
-        response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-          signal: controller.signal,
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: systemInstruction }] },
-            contents: [{ role: "user", parts: [{ text: mission }] }],
-            generationConfig: { responseMimeType: "application/json", maxOutputTokens: 1200 }
-          })
-        });
-        data = await response.json().catch(() => ({}));
-      } catch (requestError) {
-        if (requestError && requestError.name === "AbortError") {
-          if (attempt === maxAttempts) {
-            return res.status(504).json({ error: "Gemini request timed out after 25 seconds on each of 3 attempts. Please try again later." });
+    modelLoop:
+    for (const modelConfig of modelFallbacks) {
+      for (let attempt = 1; attempt <= modelConfig.attempts; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        try {
+          response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + modelConfig.name + ":generateContent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+            signal: controller.signal,
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: systemInstruction }] },
+              contents: [{ role: "user", parts: [{ text: mission }] }],
+              generationConfig: { responseMimeType: "application/json", maxOutputTokens: 1200 }
+            })
+          });
+          data = await response.json().catch(() => ({}));
+          lastRequestError = null;
+        } catch (requestError) {
+          lastRequestError = requestError;
+          if (!requestError || requestError.name !== "AbortError") {
+            if (attempt >= modelConfig.attempts && modelConfig === modelFallbacks[modelFallbacks.length - 1]) throw requestError;
           }
-        } else if (attempt === maxAttempts) {
-          throw requestError;
+        } finally {
+          clearTimeout(timeoutId);
         }
-      } finally {
-        clearTimeout(timeoutId);
-      }
 
-      if (response && response.ok) break;
-      if (response && !retryableStatuses.has(response.status)) break;
-      if (attempt < maxAttempts) {
-        const retryDelay = Math.min(1000 * (2 ** (attempt - 1)), 3000);
-        await new Promise(resolve => setTimeout(resolve, retryDelay));
+        if (response && response.ok) {
+          activeModel = modelConfig.name;
+          break modelLoop;
+        }
+
+        if (response && response.status === 429) {
+          const providerMessage = data.error && data.error.message ? data.error.message : "Gemini rate limit reached.";
+          console.error("Gemini API rate limit:", response.status, providerMessage.slice(0, 300));
+          return res.status(429).json({ error: "Gemini rate limit reached. Please wait and try again." });
+        }
+
+        const shouldRetry = lastRequestError
+          ? lastRequestError.name === "AbortError"
+          : response && retryableStatuses.has(response.status);
+        if (!shouldRetry) break;
+
+        if (attempt < modelConfig.attempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
     }
-    if (!response.ok) {
+
+    if (!activeModel) {
+      if (lastRequestError && lastRequestError.name === "AbortError") {
+        return res.status(504).json({ error: "Gemini models did not respond within the time limit. Please try again later." });
+      }
+      if (!response || !response.ok) {
       const providerMessage = data.error && data.error.message ? data.error.message : "Gemini API request failed.";
-      const safeMessage = response.status === 429
-        ? "Gemini rate limit reached. Please wait and try again."
-        : response.status === 400
-          ? "Gemini rejected this request. Check model availability and API key access."
-          : "Gemini service is temporarily unavailable.";
+      const safeMessage = response && response.status === 400
+        ? "Gemini rejected this request. Check model availability and API key access."
+        : "Gemini service is temporarily unavailable across the configured fallback models."
       console.error("Gemini API error:", response.status, providerMessage.slice(0, 300));
-      return res.status(response.status === 429 || response.status === 503 ? response.status : 502).json({ error: safeMessage });
+      return res.status(response && response.status === 503 ? 503 : 502).json({ error: safeMessage });
     }
     const text = data.candidates && data.candidates[0] && data.candidates[0].content &&
       data.candidates[0].content.parts && data.candidates[0].content.parts.map(part => part.text || "").join("");
@@ -184,7 +207,7 @@ module.exports = async function handler(req, res) {
 
     return res.status(200).json({
       provider: "Google Gemini",
-      model: "gemini-3.8-flash",
+      model: activeModel,
       agent: agentKey,
       plan: {
         summary: plan.summary.slice(0, 1200),
