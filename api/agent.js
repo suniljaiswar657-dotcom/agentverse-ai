@@ -125,9 +125,9 @@ module.exports = async function handler(req, res) {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemInstruction }] },
+        systemInstruction: { parts: [{ text: systemInstruction }] },
         contents: [{ role: "user", parts: [{ text: mission }] }],
-        generationConfig: { response_mime_type: "application/json", maxOutputTokens: 1200 }
+        generationConfig: { responseMimeType: "application/json", maxOutputTokens: 1200 }
       })
     });
     const data = await response.json().catch(() => ({}));
