@@ -130,22 +130,64 @@
     appendText(summary, "small", "", "Provider: " + (plan.provider || "Google Gemini") + " · Model: " + (plan.model || "gemini-3.8-flash"));
     output.append(summary);
 
-    const heading = document.createElement("div");
-    heading.className = "field-label";
-    heading.textContent = "RECOMMENDED WORKFLOW";
-    output.append(heading);
-    const list = document.createElement("ol");
-    list.className = "plan-steps";
-    (plan.steps || []).forEach((step, index) => {
-      const item = document.createElement("li");
-      const number = document.createElement("span");
-      number.textContent = String(index + 1).padStart(2, "0");
-      const text = document.createElement("div");
-      text.textContent = step;
-      item.append(number, text);
-      list.append(item);
-    });
-    output.append(list);
+    if (plan.researchText) {
+      const research = document.createElement("section");
+      research.className = "research-report";
+      appendText(research, "div", "field-label", "GROUNDED RESEARCH REPORT");
+      const reportText = document.createElement("div");
+      reportText.className = "research-text";
+      reportText.textContent = plan.researchText;
+      research.append(reportText);
+
+      if (Array.isArray(plan.searchQueries) && plan.searchQueries.length) {
+        const queryDetails = document.createElement("details");
+        queryDetails.className = "research-queries";
+        appendText(queryDetails, "summary", "", "Google Search queries used");
+        const queryList = document.createElement("ul");
+        plan.searchQueries.forEach(query => appendText(queryList, "li", "", query));
+        queryDetails.append(queryList);
+        research.append(queryDetails);
+      }
+
+      if (Array.isArray(plan.sources) && plan.sources.length) {
+        appendText(research, "div", "field-label research-sources-label", "VERIFIED SEARCH SOURCES");
+        const sourceList = document.createElement("ol");
+        sourceList.className = "research-sources";
+        plan.sources.forEach(source => {
+          if (!source || typeof source.url !== "string") return;
+          let url;
+          try { url = new URL(source.url); } catch { return; }
+          if (url.protocol !== "https:" && url.protocol !== "http:") return;
+          const item = document.createElement("li");
+          const link = document.createElement("a");
+          link.href = url.href;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = "[" + String(source.number || sourceList.children.length + 1) + "] " + String(source.title || url.hostname);
+          item.append(link);
+          sourceList.append(item);
+        });
+        if (sourceList.children.length) research.append(sourceList);
+      }
+      output.append(research);
+    } else {
+      const heading = document.createElement("div");
+      heading.className = "field-label";
+      heading.textContent = "RECOMMENDED WORKFLOW";
+      output.append(heading);
+      const list = document.createElement("ol");
+      list.className = "plan-steps";
+      (plan.steps || []).forEach((step, index) => {
+        const item = document.createElement("li");
+        const number = document.createElement("span");
+        number.textContent = String(index + 1).padStart(2, "0");
+        const text = document.createElement("div");
+        text.textContent = step;
+        item.append(number, text);
+        list.append(item);
+      });
+      output.append(list);
+    }
 
     if (plan.deliverable) {
       const deliverable = document.createElement("div");
@@ -211,7 +253,7 @@
 
     const agentKey = select.value === "auto" ? chooseAgent(mission) : select.value;
     button.disabled = true;
-    button.textContent = "Connecting to Gemini…";
+    button.textContent = agentKey === "researcher" ? "Searching the web with Gemini…" : "Connecting to Gemini…";
     status.textContent = "AI THINKING";
     actions.hidden = true;
     output.replaceChildren();
@@ -242,6 +284,9 @@
         risks: data.plan.risks || [],
         needsHumanApproval: data.plan.needsHumanApproval || [],
         deliverable: data.plan.deliverable || "",
+        researchText: data.plan.researchText || "",
+        sources: Array.isArray(data.plan.sources) ? data.plan.sources : [],
+        searchQueries: Array.isArray(data.plan.searchQueries) ? data.plan.searchQueries : [],
         provider: data.provider,
         model: data.model,
         createdAt: new Date().toISOString()
@@ -254,7 +299,7 @@
       showError(error && error.message ? error.message : "Could not connect to the AI service.");
     } finally {
       button.disabled = false;
-      button.textContent = "✳ Generate execution plan";
+      button.textContent = select.value === "researcher" ? "⌕ Search web & generate report" : "✳ Generate execution plan";
     }
   });
 
