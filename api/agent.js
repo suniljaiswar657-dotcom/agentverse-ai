@@ -29,8 +29,8 @@ function readCookie(req, name) {
 function validSession(req, secret) {
   const token = readCookie(req, SESSION_COOKIE);
   const parts = token.split(".");
-  if (parts.length !== 2 || !/^\\d+$/.test(parts[0])) return false;
-  const issued = Number(parts[0]);
+  if (parts.length !== 2 || !/^\d+$/.test(parts[0])) return false;
+  if (parts.length !== 2 || !/^\d+$/.test(parts[0])) return false;
   if (!Number.isFinite(issued) || Date.now() - issued > SESSION_TTL_MS || issued > Date.now() + 60000) return false;
   return safeEqual(parts[1], sign(parts[0], secret));
 }
@@ -50,7 +50,7 @@ function extractGroundedSources(metadata) {
   for (const chunk of chunks) {
     const web = chunk && chunk.web;
     const uri = web && typeof web.uri === "string" ? web.uri.trim() : "";
-    if (!/^https?:\\/\\//i.test(uri)) {
+    if (!/^https?:\/\//i.test(uri)) {
       chunkSourceNumbers.push(null);
       continue;
     }
