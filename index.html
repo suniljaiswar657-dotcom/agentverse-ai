@@ -65,6 +65,18 @@
         <div class="section-heading"><div><div class="eyebrow">LOCAL ORCHESTRATION ENGINE</div><h2>AI Brain <span class="count-pill">ENGINE 0.2</span></h2></div><span class="engine-state"><i></i> LOCAL PLANNER READY</span></div>
         <div class="brain-grid">
           <div class="panel brain-input-panel">
+            <div id="aiLoginBox" class="login-box">
+            <div class="panel-heading"><div><div class="eyebrow">SECURE WORKSPACE</div><h2>Unlock your AI Brain</h2></div></div>
+            <p class="panel-note">This private workspace requires the password configured in Vercel.</p>
+            <form id="aiLoginForm" class="login-form">
+              <label class="field-label" for="workspacePassword">WORKSPACE PASSWORD</label>
+              <input id="workspacePassword" type="password" autocomplete="current-password" maxlength="200" placeholder="Enter workspace password" required>
+              <button class="primary-action" id="loginButton" type="submit">Unlock workspace</button>
+              <p class="login-error" id="loginError" role="alert"></p>
+            </form>
+          </div>
+          <div id="aiWorkspace" hidden>
+            <div class="workspace-session"><span class="secure-label">● SESSION SECURE</span><button class="secondary-action" id="logoutButton" type="button">Lock workspace</button></div>
             <div class="panel-heading"><div><div class="eyebrow">TASK ROUTER</div><h2>Give your workforce a mission</h2></div></div>
             <label class="field-label" for="missionInput">MISSION / OBJECTIVE</label>
             <textarea id="missionInput" maxlength="1000" placeholder="Example: Research the best free tools to build a small business website..." rows="4"></textarea>
@@ -73,7 +85,8 @@
               <select id="agentSelect"><option value="auto">Auto-select specialist</option><option value="ceo">AI CEO</option><option value="developer">AI Developer</option><option value="researcher">AI Researcher</option><option value="marketer">AI Marketer</option><option value="business">AI Business</option><option value="automation">AI Automation</option><option value="security">AI Security</option></select>
             </div>
             <button class="primary-action" id="planMission" type="button">✳ Generate execution plan</button>
-            <p class="panel-note">Powered by Google Gemini through a server-side endpoint. Add GEMINI_API_KEY in Vercel to enable live AI.</p>
+            <p class="panel-note">Powered by Google Gemini through a server-side endpoint. Workspace login and API keys are never sent to the browser as provider credentials.</p>
+          </div>
           </div>
           <div class="panel plan-panel" aria-live="polite">
             <div class="panel-heading"><div><div class="eyebrow">ORCHESTRATION OUTPUT</div><h2>Execution plan</h2></div><span class="queue-tag" id="planStatus">NO PLAN</span></div>
