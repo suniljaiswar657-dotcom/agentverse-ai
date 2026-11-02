@@ -19,6 +19,7 @@
       <nav class="nav">
         <a class="nav-link active" href="#overview"><span>◫</span> Command Center</a>
         <a class="nav-link" href="#agents"><span>◈</span> AI Workforce <em>07</em></a>
+        <a class="nav-link" href="#brain"><span>✳</span> AI Brain</a>
         <a class="nav-link" href="#tasks"><span>▤</span> Task Queue</a>
         <a class="nav-link" href="#activity"><span>◷</span> Activity Log</a>
       </nav>
@@ -43,7 +44,7 @@
       <section class="metrics" aria-label="Workspace metrics">
         <article class="metric"><div class="metric-top"><span>REGISTERED AGENTS</span><b>◈</b></div><div class="metric-value">07</div><div class="metric-foot">Specialist roles configured</div></article>
         <article class="metric"><div class="metric-top"><span>OPEN TASKS</span><b>▤</b></div><div class="metric-value" id="openCount">00</div><div class="metric-foot">Waiting in your task queue</div></article>
-        <article class="metric"><div class="metric-top"><span>AWAITING APPROVAL</span><b>⌁</b></div><div class="metric-value">00</div><div class="metric-foot">No external actions authorised</div></article>
+        <article class="metric"><div class="metric-top"><span>AWAITING APPROVAL</span><b>⌁</b></div><div class="metric-value" id="approvalCount">00</div><div class="metric-foot">Plans waiting for your review</div></article>
         <article class="metric"><div class="metric-top"><span>WORKSPACE MODE</span><b>◉</b></div><div class="metric-value mode-value">SAFE</div><div class="metric-foot"><span class="green-dot"></span> Human-supervised</div></article>
       </section>
 
@@ -57,6 +58,29 @@
           <article class="agent-card"><div class="agent-icon green">▥</div><div class="agent-meta"><span class="agent-state">ROLE DEFINED</span><h3>AI Business</h3><p>Operations & reports</p></div><span class="agent-arrow">↗</span></article>
           <article class="agent-card"><div class="agent-icon pink">⤴</div><div class="agent-meta"><span class="agent-state">ROLE DEFINED</span><h3>AI Automation</h3><p>Workflow design</p></div><span class="agent-arrow">↗</span></article>
           <article class="agent-card"><div class="agent-icon red">⛨</div><div class="agent-meta"><span class="agent-state">ROLE DEFINED</span><h3>AI Security</h3><p>Risk & safety checks</p></div><span class="agent-arrow">↗</span></article>
+        </div>
+      </section>
+
+      <section class="brain-section" id="brain">
+        <div class="section-heading"><div><div class="eyebrow">LOCAL ORCHESTRATION ENGINE</div><h2>AI Brain <span class="count-pill">ENGINE 0.2</span></h2></div><span class="engine-state"><i></i> LOCAL PLANNER READY</span></div>
+        <div class="brain-grid">
+          <div class="panel brain-input-panel">
+            <div class="panel-heading"><div><div class="eyebrow">TASK ROUTER</div><h2>Give your workforce a mission</h2></div></div>
+            <label class="field-label" for="missionInput">MISSION / OBJECTIVE</label>
+            <textarea id="missionInput" maxlength="1000" placeholder="Example: Research the best free tools to build a small business website..." rows="4"></textarea>
+            <div class="brain-controls">
+              <label class="field-label" for="agentSelect">ASSIGNMENT</label>
+              <select id="agentSelect"><option value="auto">Auto-select specialist</option><option value="ceo">AI CEO</option><option value="developer">AI Developer</option><option value="researcher">AI Researcher</option><option value="marketer">AI Marketer</option><option value="business">AI Business</option><option value="automation">AI Automation</option><option value="security">AI Security</option></select>
+            </div>
+            <button class="primary-action" id="planMission" type="button">✳ Generate execution plan</button>
+            <p class="panel-note">This version uses transparent local rules. No external AI request is made.</p>
+          </div>
+          <div class="panel plan-panel" aria-live="polite">
+            <div class="panel-heading"><div><div class="eyebrow">ORCHESTRATION OUTPUT</div><h2>Execution plan</h2></div><span class="queue-tag" id="planStatus">NO PLAN</span></div>
+            <div id="planOutput" class="plan-output"><div class="empty-state"><span>✳</span><strong>Ready for your first mission</strong><small>Your objective and assigned specialist will appear here.</small></div></div>
+            <div class="approval-actions" id="approvalActions" hidden><button class="approve-action" id="approvePlan" type="button">✓ Approve plan</button><button class="secondary-action" id="rejectPlan" type="button">Discard</button></div>
+            <p class="panel-note" id="engineNotice">Approval only records your decision locally. It does not run external tools or contact services.</p>
+          </div>
         </div>
       </section>
 
@@ -79,5 +103,6 @@
     </main>
   </div>
   <script src="app.js"></script>
+  <script src="engine.js"></script>
 </body>
 </html>
