@@ -17,6 +17,13 @@
     marketer: "AI Marketer", business: "AI Business",
     automation: "AI Automation", security: "AI Security"
   };
+  const loginBox = $("aiLoginBox");
+  const aiWorkspace = $("aiWorkspace");
+  const loginForm = $("aiLoginForm");
+  const loginError = $("loginError");
+  const loginButton = $("loginButton");
+  const passwordInput = $("workspacePassword");
+  const logoutButton = $("logoutButton");
   let currentPlan = null;
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") || {}; } catch { saved = {}; }
@@ -35,6 +42,72 @@
     for (const [key, pattern] of rules) if (pattern.test(t)) return key;
     return "ceo";
   }
+
+  function setAuthenticated(authenticated) {
+    loginBox.hidden = authenticated;
+    aiWorkspace.hidden = !authenticated;
+    if (authenticated) {
+      loginError.textContent = "";
+      passwordInput.value = "";
+    }
+  }
+
+  async function checkSession() {
+    try {
+      const response = await fetch("/api/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ action: "status" })
+      });
+      const data = await response.json().catch(() => ({}));
+      setAuthenticated(Boolean(response.ok && data.authenticated));
+      if (!response.ok && data.error) loginError.textContent = data.error;
+    } catch {
+      setAuthenticated(false);
+      loginError.textContent = "Could not check the workspace session. Refresh and try again.";
+    }
+  }
+
+  loginForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    const password = passwordInput.value;
+    if (!password) return;
+    loginButton.disabled = true;
+    loginButton.textContent = "Unlocking…";
+    loginError.textContent = "";
+    try {
+      const response = await fetch("/api/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ action: "login", password })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Sign-in failed.");
+      setAuthenticated(true);
+    } catch (error) {
+      loginError.textContent = error && error.message ? error.message : "Sign-in failed.";
+    } finally {
+      loginButton.disabled = false;
+      loginButton.textContent = "Unlock workspace";
+    }
+  });
+
+  logoutButton.addEventListener("click", async () => {
+    try {
+      await fetch("/api/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ action: "logout" })
+      });
+    } finally {
+      setAuthenticated(false);
+      status.textContent = "LOCKED";
+      actions.hidden = true;
+    }
+  });
 
   function updateApprovalCount() {
     approvalCount.textContent = saved.pending ? "01" : "00";
@@ -152,6 +225,7 @@
     try {
       const response = await fetch("/api/agent", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mission, agent: agentKey })
       });
@@ -214,4 +288,5 @@
     showPlan(currentPlan, Boolean(saved.pending));
   }
   updateApprovalCount();
+  checkSession();
 })();
